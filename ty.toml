@@ -1,0 +1,11 @@
+[environment]
+python-version = "3.14"
+
+[terminal]
+error-on-warning = true
+
+[rules]
+redundant-cast = "warn"
+unused-ignore-comment = "warn"
+blanket-ignore-comment = "warn"
+division-by-zero = "error"

@@ -1,6 +1,8 @@
-import sys
 import argparse
+import sys
+
 from clyft.cli.main import build_parser
+
 
 def main() -> None:
     parser = build_parser()
@@ -14,5 +16,6 @@ def main() -> None:
         print(exception, file=sys.stderr)
         sys.exit(1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

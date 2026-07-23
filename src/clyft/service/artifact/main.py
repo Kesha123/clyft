@@ -1,10 +1,9 @@
+import hashlib
 import json
 import shutil
-import hashlib
-from pathlib import Path
-from datetime import datetime, timezone
 from dataclasses import dataclass, field
-
+from datetime import UTC, datetime
+from pathlib import Path
 
 _IMAGE_LAYOUT_VERSION = "1.0.0"
 _LAYER_MEDIA_TYPE = "application/octet-stream"
@@ -26,7 +25,7 @@ def _expand_paths(paths: list[str]) -> list[str]:
         if p.is_file():
             files.append(path)
             continue
-        for root, dirs, dirs_files in p.walk(follow_symlinks=False):
+        for root, _dirs, dirs_files in p.walk(follow_symlinks=False):
             for file in dirs_files:
                 full_path = root / file
                 files.append(str(full_path))
@@ -48,9 +47,7 @@ def _write_layout(index: OCIIndex, dest: Path) -> None:
     blobs_dir = dest / "blobs" / "sha256"
     blobs_dir.mkdir(parents=True, exist_ok=True)
 
-    (dest / "oci-layout").write_text(
-        json.dumps(OCILayout().to_dict(), indent=2)
-    )
+    (dest / "oci-layout").write_text(json.dumps(OCILayout().to_dict(), indent=2))
 
     for manifest in index.manifests:
         config = manifest.config
@@ -65,9 +62,7 @@ def _write_layout(index: OCIIndex, dest: Path) -> None:
         manifest_digest = manifest.digest.split(":", 1)[1]
         (blobs_dir / manifest_digest).write_bytes(manifest_bytes)
 
-    (dest / "index.json").write_text(
-        json.dumps(index.to_dict(), indent=2)
-    )
+    (dest / "index.json").write_text(json.dumps(index.to_dict(), indent=2))
 
 
 @dataclass
@@ -90,7 +85,7 @@ class OCILayer:
         self.media_type = _LAYER_MEDIA_TYPE
         self.annotations = {
             "org.opencontainers.image.title": Path(self.path).name,
-            "org.opencontainers.image.filepath": self.path
+            "org.opencontainers.image.filepath": self.path,
         }
         self.size = Path(self.path).stat().st_size
         with open(self.path, "rb") as file:
@@ -160,7 +155,7 @@ class OCIIndex:
     def __post_init__(self) -> None:
         self.annotations = {
             "org.opencontainers.image.ref.name": self.ref_name,
-            "org.opencontainers.image.created": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            "org.opencontainers.image.created": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         }
 
     def to_dict(self) -> dict:

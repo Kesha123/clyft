@@ -1,0 +1,12 @@
+paths = ["src"]
+max-complexity-allowed = 15
+quiet = false
+ignore-complexity = false
+failed = false
+color = "auto"
+sort = "asc"
+exclude = []
+check-script = false
+no-ignore = false
+report-ignored = false
+output-format = []
