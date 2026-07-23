@@ -1,0 +1,30 @@
+when:
+  - event: pull_request
+  - event: push
+    branch: main
+
+steps:
+  install:
+    image: &img zot.innokentii-kozlov.com/clyft-ci:v0.0.0
+    commands:
+      - make install
+  lint-check:
+    image: *img
+    commands:
+      - make lint-check
+  format-check:
+    image: *img
+    commands:
+      - make format-check
+  typecheck:
+    image: *img
+    commands:
+      - make typecheck
+  complexity-check:
+    image: *img
+    commands:
+      - make complexity-check
+  build:
+    image: *img
+    commands:
+      - make build
