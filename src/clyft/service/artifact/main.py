@@ -5,15 +5,27 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
+from clyft.service.init import get_clyft_path
+
 _IMAGE_LAYOUT_VERSION = "1.0.0"
 _LAYER_MEDIA_TYPE = "application/octet-stream"
 _FILE_DIGEST_ALGORITHM = "sha256"
 
 
 def artifact(tag: str, paths: list[str]) -> None:
+    _validate_tag(tag)
+    storage_path = Path(get_clyft_path())
+    if not storage_path.exists():
+        raise FileNotFoundError(f"clyft storage path not found: {storage_path}. run 'clyft init' first.")
     files = _expand_paths(paths)
     index = _build_layout(tag=tag, paths=files)
-    _write_layout(index=index, dest=Path(tag))
+    dest = storage_path / tag
+    _write_layout(index=index, dest=dest)
+
+
+def _validate_tag(tag: str) -> None:
+    if not tag or tag in (".", "..") or Path(tag).name != tag:
+        raise ValueError(f"invalid tag: {tag!r}")
 
 
 def _expand_paths(paths: list[str]) -> list[str]:
