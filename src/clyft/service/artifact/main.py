@@ -5,27 +5,25 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
-from clyft.service.init import get_clyft_path
+from clyft.utils import (
+    IMAGE_LAYOUT_VERSION,
+    LAYER_MEDIA_TYPE,
+    CLyftStoragePathNotFoundError,
+    ContainerRuntime,
+    get_clyft_storage_path,
+    validate_tag,
+)
 
-_IMAGE_LAYOUT_VERSION = "1.0.0"
-_LAYER_MEDIA_TYPE = "application/octet-stream"
-_FILE_DIGEST_ALGORITHM = "sha256"
 
-
-def artifact(tag: str, paths: list[str]) -> None:
-    _validate_tag(tag)
-    storage_path = Path(get_clyft_path())
+def artifact(tag: str, paths: list[str], container_runtime: ContainerRuntime) -> None:
+    validate_tag(tag)
+    storage_path = get_clyft_storage_path()
     if not storage_path.exists():
-        raise FileNotFoundError(f"clyft storage path not found: {storage_path}. run 'clyft init' first.")
+        raise CLyftStoragePathNotFoundError(storage_path)
     files = _expand_paths(paths)
-    index = _build_layout(tag=tag, paths=files)
+    index = _build_layout(tag=tag, paths=files, container_runtime=container_runtime)
     dest = storage_path / tag
     _write_layout(index=index, dest=dest)
-
-
-def _validate_tag(tag: str) -> None:
-    if not tag or tag in (".", "..") or Path(tag).name != tag:
-        raise ValueError(f"invalid tag: {tag!r}")
 
 
 def _expand_paths(paths: list[str]) -> list[str]:
@@ -44,10 +42,14 @@ def _expand_paths(paths: list[str]) -> list[str]:
     return files
 
 
-def _build_layout(tag: str, paths: list[str]) -> OCIIndex:
+def _build_layout(tag: str, paths: list[str], *, container_runtime: ContainerRuntime) -> OCIIndex:
     layers = [OCILayer(path=p) for p in paths]
     config = OCIConfig()
-    manifest = OCIManifest(config=config, layers=layers)
+    manifest = OCIManifest(
+        config=config,
+        layers=layers,
+        annotations={"org.clyft.container.runtime": str(container_runtime)},
+    )
     return OCIIndex(manifests=[manifest], ref_name=tag)
 
 
@@ -79,7 +81,7 @@ def _write_layout(index: OCIIndex, dest: Path) -> None:
 
 @dataclass
 class OCILayout:
-    image_layout_version: str = _IMAGE_LAYOUT_VERSION
+    image_layout_version: str = IMAGE_LAYOUT_VERSION
 
     def to_dict(self) -> dict:
         return {"imageLayoutVersion": self.image_layout_version}
@@ -94,14 +96,14 @@ class OCILayer:
     digest: str = field(init=False)
 
     def __post_init__(self) -> None:
-        self.media_type = _LAYER_MEDIA_TYPE
+        self.media_type = LAYER_MEDIA_TYPE
         self.annotations = {
             "org.opencontainers.image.title": Path(self.path).name,
             "org.opencontainers.image.filepath": self.path,
         }
         self.size = Path(self.path).stat().st_size
         with open(self.path, "rb") as file:
-            self.digest = f"{_FILE_DIGEST_ALGORITHM}:{hashlib.file_digest(file, _FILE_DIGEST_ALGORITHM).hexdigest()}"
+            self.digest = f"sha256:{hashlib.file_digest(file, 'sha256').hexdigest()}"
 
     def to_dict(self) -> dict:
         return {
@@ -135,6 +137,7 @@ class OCIConfig:
 class OCIManifest:
     config: OCIConfig
     layers: list[OCILayer]
+    annotations: dict = field(default_factory=dict)
     schema_version: int = 2
     media_type: str = "application/vnd.oci.image.manifest.v1+json"
     digest: str = field(init=False)
@@ -151,6 +154,7 @@ class OCIManifest:
             "mediaType": self.media_type,
             "config": self.config.to_dict(),
             "layers": [layer.to_dict() for layer in self.layers],
+            "annotations": self.annotations,
         }
 
     def to_json_bytes(self) -> bytes:
@@ -161,14 +165,16 @@ class OCIManifest:
 class OCIIndex:
     manifests: list[OCIManifest]
     ref_name: str
+    annotations: dict = field(default_factory=dict)
     schema_version: int = 2
-    annotations: dict = field(init=False)
 
     def __post_init__(self) -> None:
-        self.annotations = {
+        defaults = {
             "org.opencontainers.image.ref.name": self.ref_name,
             "org.opencontainers.image.created": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         }
+        defaults.update(self.annotations)
+        self.annotations = defaults
 
     def to_dict(self) -> dict:
         return {
