@@ -54,10 +54,32 @@ def _push_callback(args: argparse.Namespace) -> None:
     push_oci_layout_to_registry(args.tag)
 
 
+def _build_login_parser(subparser) -> None:
+    login_parser = subparser.add_parser("login", help="Login to OCI registry.")
+    login_parser.add_argument("registry", help="OCI registry url.")
+    login_parser.add_argument("-u", "--user", required=True, help="User to login with to OCI registry.")
+    login_parser.add_argument("-p", "--password", required=True, help="Password to login with to OCI registry.")
+    login_parser.set_defaults(func=_login_callback, parser=login_parser)
+
+
+def _login_callback(args: argparse.Namespace) -> None: ...
+
+
+def _build_logout_parser(subparser) -> None:
+    logout_parser = subparser.add_parser("logout", help="Logout from OCI registry.")
+    logout_parser.add_argument("registry", help="OCI registry url.")
+    logout_parser.set_defaults(func=_logout_callback, parser=logout_parser)
+
+
+def _logout_callback(args: argparse.Namespace) -> None: ...
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser("clyft")
     subparser = parser.add_subparsers(dest="command")
     _build_artifact_parser(subparser)
     _build_init_parser(subparser)
     _build_push_parser(subparser)
+    _build_login_parser(subparser)
+    _build_logout_parser(subparser)
     return parser
