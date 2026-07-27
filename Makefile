@@ -1,47 +1,40 @@
-.DEFAULT_GOAL := help
-
 .PHONY: install lint format typecheck complexity-check \
         check lint-check format-check ci build clean \
-        start-zot stop-zot help
+        start-zot stop-zot
 
-help: ## Show available targets
-	@awk 'BEGIN {FS = ":.*?##"; printf "Usage:\n  make <target>\n\nTargets:\n"} \
-	/^[a-zA-Z_-]+:.*?##/ { printf "  %-20s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
-
-install: ## Sync dependencies from uv.lock
+install:
 	uv sync --frozen
 
-lint: ## Run ruff with auto-fix
+lint:
 	uv run ruff check --fix .
 
-format: ## Format code with ruff
+format:
 	uv run ruff format .
 	uv run ruff check --fix .
 
-typecheck: ## Run ty type checker
+typecheck:
 	uv run ty check
 
-complexity-check: ## Run complexipy (max complexity 15)
+complexity-check:
 	uv run complexipy
 
-build: ## Build package with uv
+build:
 	uv build
 
-lint-check: ## Run ruff without fixes (CI mode)
+lint-check:
 	uv run ruff check .
 
-format-check: ## Check formatting without fixes (CI mode)
+format-check:
 	uv run ruff format --check .
 
-ci: ## Run full CI pipeline locally
-	install lint-check format-check typecheck complexity-check build
+ci: install lint-check format-check typecheck complexity-check build
 
-clean: ## Remove caches and build artifacts
+clean:
 	rm -rf .ruff_cache .complexipy_cache dist build
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 
-start-zot: ## Start local Zot OCI registry (podman)
+start-zot:
 	$(MAKE) -C test start-zot
 
-stop-zot: ## Stop local Zot OCI registry (podman)
+stop-zot:
 	$(MAKE) -C test stop-zot
