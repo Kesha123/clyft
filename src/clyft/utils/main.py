@@ -2,7 +2,7 @@ import os
 from enum import Enum
 from pathlib import Path
 
-from clyft.utils.constants import ROOT_USER_CLYFT_PATH, USER_CLYFT_PATH
+from clyft.utils.constants import CLYFT_ROOT_STORAGE_PATH, CLYFT_USER_STORAGE_PATH
 
 
 class ContainerRuntime(Enum):
@@ -15,8 +15,8 @@ class ContainerRuntime(Enum):
 
 def get_clyft_storage_path() -> Path:
     if os.geteuid() == 0:
-        return ROOT_USER_CLYFT_PATH
-    return Path.home() / USER_CLYFT_PATH
+        return CLYFT_ROOT_STORAGE_PATH
+    return CLYFT_USER_STORAGE_PATH
 
 
 def validate_tag(tag: str) -> None:

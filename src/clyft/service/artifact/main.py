@@ -6,8 +6,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from clyft.utils import (
-    IMAGE_LAYOUT_VERSION,
-    LAYER_MEDIA_TYPE,
     CLyftStoragePathNotFoundError,
     ContainerRuntime,
     get_clyft_storage_path,
@@ -81,7 +79,7 @@ def _write_layout(index: OCIIndex, dest: Path) -> None:
 
 @dataclass
 class OCILayout:
-    image_layout_version: str = IMAGE_LAYOUT_VERSION
+    image_layout_version: str = "1.0.0"
 
     def to_dict(self) -> dict:
         return {"imageLayoutVersion": self.image_layout_version}
@@ -96,7 +94,7 @@ class OCILayer:
     digest: str = field(init=False)
 
     def __post_init__(self) -> None:
-        self.media_type = LAYER_MEDIA_TYPE
+        self.media_type = "application/octet-stream"
         self.annotations = {
             "org.opencontainers.image.title": Path(self.path).name,
             "org.opencontainers.image.filepath": self.path,

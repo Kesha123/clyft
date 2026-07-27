@@ -1,6 +1,7 @@
 from pathlib import Path
+from typing import Final
 
-IMAGE_LAYOUT_VERSION = "1.0.0"
-LAYER_MEDIA_TYPE = "application/octet-stream"
-USER_CLYFT_PATH = Path(".local/share/clyft")
-ROOT_USER_CLYFT_PATH = Path("/var/lib/clyft")
+APP_NAME: Final[str] = "clyft"
+
+CLYFT_USER_STORAGE_PATH: Final[Path] = Path.home() / ".local" / "share" / "clyft"
+CLYFT_ROOT_STORAGE_PATH: Final[Path] = Path("/var/lib/clyft")
