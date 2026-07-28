@@ -1,0 +1,15 @@
+[Unit]
+Description=Clyft e2e Nginx
+
+[Container]
+Image=nginx:1.27-alpine
+ContainerName=clyft-nginx
+Network=clyft-nginx.network
+IP=172.28.0.10
+PublishPort=8080:80
+
+[Service]
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

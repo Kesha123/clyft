@@ -1,0 +1,18 @@
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: clyft-nginx
+    networks:
+      clyft-nginx:
+        ipv4_address: 172.28.0.10
+    ports:
+      - "8080:80"
+
+networks:
+  clyft-nginx:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+          gateway: 172.28.0.1

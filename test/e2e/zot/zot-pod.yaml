@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: zot-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zot
+spec:
+  volumes:
+    - name: zot-config
+      hostPath:
+        path: ./e2e/zot/config
+        type: Directory
+    - name: zot-data
+      persistentVolumeClaim:
+        claimName: zot-data
+  containers:
+    - name: zot
+      image: ghcr.io/project-zot/zot:v2.1.18
+      args:
+        - serve
+        - /etc/zot/config.yaml
+      volumeMounts:
+        - name: zot-config
+          mountPath: /etc/zot
+          readOnly: true
+        - name: zot-data
+          mountPath: /var/lib/registry
+      ports:
+        - containerPort: 5000
+          hostPort: 5000
+          hostIP: 127.0.0.1
