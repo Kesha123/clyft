@@ -19,7 +19,28 @@ const (
 	artifactType       = "application/vnd.clyft.artifact.v1"
 )
 
-func Artifact(ctx context.Context, tag string, paths []string) (retErr error) {
+func addPathToOCIStore(filestore *file.Store, ctx context.Context, layers []ocispec.Descriptor, path string) error {
+	if p, err := os.Stat(path); err != nil {
+		return fmt.Errorf("error: %w", err)
+	} else {
+		if p.IsDir() {
+			descriptor, err := filestore.Add(ctx, path, directoryMediaType, path)
+			if err != nil {
+				return fmt.Errorf("error adding directory %s to OCI filestore: %w", path, err)
+			}
+			layers = append(layers, descriptor)
+		} else {
+			descriptor, err := filestore.Add(ctx, path, fileMediaType, path)
+			if err != nil {
+				return fmt.Errorf("error adding file %s to OCI filestore: %w", path, err)
+			}
+			layers = append(layers, descriptor)
+		}
+	}
+	return nil
+}
+
+func Artifact(ctx context.Context, tag string, paths []string) error {
 	clyftStoragePath, err := utils.GetClyftStoragePath()
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
@@ -34,22 +55,8 @@ func Artifact(ctx context.Context, tag string, paths []string) (retErr error) {
 	var layers []ocispec.Descriptor
 
 	for _, path := range paths {
-		if p, err := os.Stat(path); err != nil {
+		if err := addPathToOCIStore(filestore, ctx, layers, path); err != nil {
 			return fmt.Errorf("error: %w", err)
-		} else {
-			if p.IsDir() {
-				descriptor, err := filestore.Add(ctx, path, directoryMediaType, path)
-				if err != nil {
-					return fmt.Errorf("error: %w", err)
-				}
-				layers = append(layers, descriptor)
-			} else {
-				descriptor, err := filestore.Add(ctx, path, fileMediaType, path)
-				if err != nil {
-					return fmt.Errorf("error: %w", err)
-				}
-				layers = append(layers, descriptor)
-			}
 		}
 	}
 
