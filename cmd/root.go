@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
@@ -9,6 +11,6 @@ var rootCmd = &cobra.Command{
 	Short: "A GitOps tool for containers",
 }
 
-func Execute() {
-	cobra.CheckErr(rootCmd.Execute())
+func ExecuteContext(ctx context.Context) error {
+	return rootCmd.Execute()
 }

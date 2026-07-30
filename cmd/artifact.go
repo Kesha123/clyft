@@ -13,14 +13,16 @@ var artifactCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tag, _ := cmd.Flags().GetString("tag")
 		path, _ := cmd.Flags().GetStringSlice("path")
-		if tag == "" {
+		if tag == "" || tag == "." || tag == ".." {
 			return fmt.Errorf("tag is required (pass -t/--tag)")
 		}
 		if len(path) == 0 {
 			return fmt.Errorf("at least one path is required (pass -p/--path)")
 		}
 
-		return artifact.Artifact(tag, path)
+		ctx := cmd.Context()
+
+		return artifact.Artifact(ctx, tag, path)
 	},
 }
 
