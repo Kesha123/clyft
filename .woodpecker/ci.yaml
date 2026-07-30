@@ -1,0 +1,26 @@
+when:
+  - event: pull_request
+  - event: push
+    branch: main
+
+steps:
+  fmt-check:
+    image: &img zot.innokentii-kozlov.com/docker-images/library/golang:1.26.5
+    commands:
+      - make fmt-check
+  tidy-check:
+    image: *img
+    commands:
+      - make tidy-check
+  vet:
+    image: *img
+    commands:
+      - make vet
+  test:
+    image: *img
+    commands:
+      - make test
+  build:
+    image: *img
+    commands:
+      - make build
