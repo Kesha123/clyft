@@ -7,9 +7,8 @@ PLATFORMS=linux/amd64 linux/arm64
 build:
 	@mkdir -p $(BUILD_DIR)
 	@for platform in $(PLATFORMS); do \
-		os_arch=($${platform//\// }); \
-		GOOS=$${os_arch[0]}; \
-		GOARCH=$${os_arch[1]}; \
+		GOOS=$$(echo $$platform | cut -d'/' -f1); \
+		GOARCH=$$(echo $$platform | cut -d'/' -f2); \
 		extension=""; \
 		output_name="$(BUILD_DIR)/$(BINARY_NAME)-$$GOOS-$$GOARCH$$extension"; \
 		CGO_ENABLED=0 GOOS=$$GOOS GOARCH=$$GOARCH go build -mod=vendor -ldflags="-w -s" -o $$output_name .; \
