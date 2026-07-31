@@ -14,30 +14,29 @@ import (
 )
 
 const (
-	fileMediaType      = "application/octet-stream "
+	fileMediaType      = "application/octet-stream"
 	directoryMediaType = "application/vnd.oci.image.layer.v1.tar+gzip"
 	artifactType       = "application/vnd.clyft.artifact.v1"
 )
 
-func addPathToOCIStore(filestore *file.Store, ctx context.Context, layers []ocispec.Descriptor, path string) error {
-	if p, err := os.Stat(path); err != nil {
-		return fmt.Errorf("error: %w", err)
-	} else {
-		if p.IsDir() {
-			descriptor, err := filestore.Add(ctx, path, directoryMediaType, path)
-			if err != nil {
-				return fmt.Errorf("error adding directory %s to OCI filestore: %w", path, err)
-			}
-			layers = append(layers, descriptor)
-		} else {
-			descriptor, err := filestore.Add(ctx, path, fileMediaType, path)
-			if err != nil {
-				return fmt.Errorf("error adding file %s to OCI filestore: %w", path, err)
-			}
-			layers = append(layers, descriptor)
-		}
+func addPathToOCIStore(filestore *file.Store, ctx context.Context, path string) (ocispec.Descriptor, error) {
+	p, err := os.Stat(path)
+	if err != nil {
+		return ocispec.Descriptor{}, fmt.Errorf("error: %w", err)
 	}
-	return nil
+
+	kind := "file"
+	mediaType := fileMediaType
+	if p.IsDir() {
+		kind = "directory"
+		mediaType = directoryMediaType
+	}
+
+	descriptor, err := filestore.Add(ctx, path, mediaType, path)
+	if err != nil {
+		return ocispec.Descriptor{}, fmt.Errorf("error adding %s %s to OCI filestore: %w", kind, path, err)
+	}
+	return descriptor, nil
 }
 
 func Artifact(ctx context.Context, tag string, paths []string) error {
@@ -55,9 +54,11 @@ func Artifact(ctx context.Context, tag string, paths []string) error {
 	var layers []ocispec.Descriptor
 
 	for _, path := range paths {
-		if err := addPathToOCIStore(filestore, ctx, layers, path); err != nil {
+		descriptor, err := addPathToOCIStore(filestore, ctx, path)
+		if err != nil {
 			return fmt.Errorf("error: %w", err)
 		}
+		layers = append(layers, descriptor)
 	}
 
 	ociStore, err := oci.New(filepath.Join(clyftStoragePath, tag))
