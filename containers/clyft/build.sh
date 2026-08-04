@@ -1,14 +1,14 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env sh
+set -eu
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_dir="$(cd "$(dirname "$0")" && pwd)"
 context="$(cd "${script_dir}/../.." && pwd)"
 sha="$(git -C "${context}" rev-parse HEAD)"
+container_runtime="${3:-podman}"
 
 _main() {
-	local version="${1:?usage: build.sh <version> [platforms]}"
-	local platforms="${2:-linux/amd64,linux/arm64}"
-	local container_runtime="${2:-podman}"
+	version="${1:?usage: build.sh <version> [platforms] [container_runtime]}"
+	platforms="${2:-linux/amd64,linux/arm64}"
 
 	"${container_runtime}" buildx build \
 		--platform "${platforms}" \
