@@ -9,9 +9,6 @@ clyft stack sync [--stack, --path, --git] --preview (diff)
 clyft stack rollback [--stack, --path, --git]
 clyft stack rollback [--stack, --path, --git] --preview (diff)
 
-# Files and directories listed in this files will not be included into OCI package.
-.clyftignore
-
 clyft init
 
 clyft push <tag>

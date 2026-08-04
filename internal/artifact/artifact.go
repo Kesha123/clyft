@@ -39,7 +39,40 @@ func addPathToOCIStore(filestore *file.Store, ctx context.Context, path string) 
 	return descriptor, nil
 }
 
-func Artifact(ctx context.Context, tag string, paths []string) error {
+func packageToOCILayout(ctx context.Context, clyftStoragePath, tag string, filestore *file.Store, layers []ocispec.Descriptor) error {
+	ociStore, err := oci.New(filepath.Join(clyftStoragePath, tag))
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+
+	manifestDescriptor, err := oras.PackManifest(ctx, filestore, oras.PackManifestVersion1_1, artifactType, oras.PackManifestOptions{
+		Layers: layers,
+	})
+	if err != nil {
+		return fmt.Errorf("error packing manifest: %w", err)
+	}
+
+	if err := filestore.Tag(ctx, manifestDescriptor, tag); err != nil {
+		return fmt.Errorf("error tagging manifest: %w", err)
+	}
+
+	if _, err := oras.Copy(ctx, filestore, tag, ociStore, tag, oras.DefaultCopyOptions); err != nil {
+		return fmt.Errorf("error copying artifact to oci store: %w", err)
+	}
+
+	return nil
+}
+
+func Artifact(ctx context.Context, tags []string, paths []string) error {
+	if len(tags) == 0 {
+		return fmt.Errorf("tag is required (pass -t/--tag)")
+	}
+	for _, tag := range tags {
+		if tag == "" || tag == "." || tag == ".." {
+			return fmt.Errorf("invalid tag %q", tag)
+		}
+	}
+
 	clyftStoragePath, err := utils.GetClyftStoragePath()
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
@@ -61,24 +94,10 @@ func Artifact(ctx context.Context, tag string, paths []string) error {
 		layers = append(layers, descriptor)
 	}
 
-	ociStore, err := oci.New(filepath.Join(clyftStoragePath, tag))
-	if err != nil {
-		return fmt.Errorf("error: %w", err)
-	}
-
-	manifestDescriptor, err := oras.PackManifest(ctx, filestore, oras.PackManifestVersion1_1, artifactType, oras.PackManifestOptions{
-		Layers: layers,
-	})
-	if err != nil {
-		return fmt.Errorf("error packing manifest: %w", err)
-	}
-
-	if err := filestore.Tag(ctx, manifestDescriptor, tag); err != nil {
-		return fmt.Errorf("error tagging manifest: %w", err)
-	}
-
-	if _, err := oras.Copy(ctx, filestore, tag, ociStore, tag, oras.DefaultCopyOptions); err != nil {
-		return fmt.Errorf("error copying artifact to oci store: %w", err)
+	for _, tag := range tags {
+		if err := packageToOCILayout(ctx, clyftStoragePath, tag, filestore, layers); err != nil {
+			return err
+		}
 	}
 
 	return nil
