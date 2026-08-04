@@ -5,19 +5,24 @@ End-to-end tests, fixtures and services for the `clyft` CLI.
 ## Zot OCI registry
 
 Local registry backed by [zot](https://github.com/project-zot/zot), used as the
-OCI registry target for `clyft`. Run via podman kube from `test/Makefile`:
+OCI registry target for `clyft`. Run via docker compose from `test/Makefile`:
 
 ```sh
-make start-zot   # creates network + plays zot-pod.yaml
-make stop-zot    # tears down pod + network
+make start-zot   # starts the zot service (project: local)
+make stop-zot    # stops and removes the zot service + volume
 ```
 
-- **Pod**: `zot/zot-pod.yaml` — image `ghcr.io/project-zot/zot:v2.1.18`,
-  `args: [serve, /etc/zot/config.yaml]`.
-- **Network**: bridge `zot-net` (`172.29.0.0/24`), created by the Makefile target.
+Override the compose project name to isolate runs (e.g. in CI):
+
+```sh
+make start-zot COMPOSE_PROJECT=$CI_PIPELINE_NUMBER
+```
+
+- **Compose**: `zot/compose.yaml` — image `ghcr.io/project-zot/zot:v2.1.18`,
+  `command: [serve, /etc/zot/config.yaml]`.
 - **Port**: `127.0.0.1:5000` → container `5000` (HTTP; loopback only).
-- **Volumes**: `./e2e/zot/config` → `/etc/zot` (read-only); PVC `zot-data` →
-  `/var/lib/registry` (persisted registry storage).
+- **Volumes**: `./e2e/zot/config` → `/etc/zot` (read-only); named volume
+  `zot-data` → `/var/lib/registry` (persisted registry storage).
 - **Config**: `zot/config/config.yaml` — dist-spec `1.1.1`, HTTP on `0.0.0.0:5000`,
   htpasswd auth at `/etc/zot/htpasswd`, UI + search extensions enabled.
 - **Auth**: `zot/config/htpasswd` — test user `clyft` / `test` (bcrypt).

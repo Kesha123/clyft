@@ -1,13 +1,15 @@
-ZOT_POD     := e2e/zot/zot-pod.yaml
-ZOT_NETWORK := zot-net
-ZOT_SUBNET  := 172.29.0.0/24
+ZOT_COMPOSE     := e2e/zot/compose.yaml
+COMPOSE_PROJECT ?= local
+CONTAINER_RUNTIME 	?= podman
 
-.PHONY: start-zot stop-zot
+.PHONY: start-zot stop-zot e2e-tests e2e-test/%
 
 start-zot:
-	@podman network create --driver bridge --subnet $(ZOT_SUBNET) $(ZOT_NETWORK) 2>/dev/null || true
-	@podman kube play $(ZOT_POD) --network $(ZOT_NETWORK)
+	$(CONTAINER_RUNTIME) compose -p $(COMPOSE_PROJECT) -f $(ZOT_COMPOSE) up -d
 
 stop-zot:
-	@-podman kube down $(ZOT_POD)
-	@-podman network rm $(ZOT_NETWORK)
+	$(CONTAINER_RUNTIME) compose -p $(COMPOSE_PROJECT) -f $(ZOT_COMPOSE) down -v
+
+e2e-tests:
+
+e2e-test/%:

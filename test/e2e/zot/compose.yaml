@@ -1,0 +1,12 @@
+services:
+  zot:
+    image: ghcr.io/project-zot/zot:v2.1.18
+    command: ["serve", "/etc/zot/config.yaml"]
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - ./config:/etc/zot:ro
+      - zot-data:/var/lib/registry
+
+volumes:
+  zot-data:
