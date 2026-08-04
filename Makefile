@@ -2,7 +2,8 @@ BINARY_NAME=clyft
 BUILD_DIR=bin
 PLATFORMS=linux/amd64 linux/arm64
 
-.PHONY: build clean vet fmt-check tidy tidy-check vendor test start-zot stop-zot
+.PHONY: build clean vet fmt-check tidy tidy-check vendor test start-zot stop-zot \
+        containers/build/% containers/build/clyft
 
 build:
 	@mkdir -p $(BUILD_DIR)
@@ -42,3 +43,9 @@ start-zot:
 
 stop-zot:
 	$(MAKE) -C test stop-zot
+
+containers/build/%:
+	@$(MAKE) -C containers build/$*
+
+containers/build/clyft:
+	@$(MAKE) -C containers build/clyft
