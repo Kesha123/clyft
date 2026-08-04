@@ -24,3 +24,21 @@ steps:
     image: *img
     commands:
       - make build
+  build-container:
+    image: docker:27
+    commands:
+      - apk add --no-cache make git
+      - make containers/build/clyft
+    depends_on: [build]
+  start-zot:
+    image: docker:27
+    commands:
+      - apk add --no-cache make
+      - make start-zot COMPOSE_PROJECT=$CI_PIPELINE_NUMBER
+    depends_on: [build-container]
+  stop-zot:
+    image: docker:27
+    commands:
+      - apk add --no-cache make
+      - make stop-zot COMPOSE_PROJECT=$CI_PIPELINE_NUMBER
+    depends_on: [start-zot]
