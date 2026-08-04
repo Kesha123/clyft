@@ -1,0 +1,10 @@
+FROM zot.innokentii-kozlov.com/docker-images/library/golang:1.26.5 AS builder
+WORKDIR /src
+COPY go.mod go.sum ./
+COPY vendor/ ./vendor/
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -ldflags="-w -s" -o /out/clyft .
+
+FROM zot.innokentii-kozlov.com/gcr-images/distroless/static-debian12
+COPY --from=builder /out/clyft /usr/local/bin/clyft
+ENTRYPOINT ["/usr/local/bin/clyft"]

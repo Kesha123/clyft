@@ -1,0 +1,10 @@
+.git
+.github
+.woodpecker
+bin
+test
+target
+containers
+*.md
+.env
+Makefile
