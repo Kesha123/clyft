@@ -27,6 +27,7 @@ steps:
   build-container:
     image: docker:27
     volumes:
+      - /home/admin/.docker/config.json
       - /var/run/docker.sock:/var/run/docker.sock
     commands:
       - apk add --no-cache make git
@@ -35,6 +36,7 @@ steps:
   start-zot:
     image: docker:27
     volumes:
+      - /home/admin/.docker/config.json
       - /var/run/docker.sock:/var/run/docker.sock
     commands:
       - apk add --no-cache make
@@ -43,6 +45,7 @@ steps:
   stop-zot:
     image: docker:27
     volumes:
+      - /home/admin/.docker/config.json
       - /var/run/docker.sock:/var/run/docker.sock
     commands:
       - apk add --no-cache make
