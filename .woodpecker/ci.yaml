@@ -28,17 +28,17 @@ steps:
     image: docker:27
     commands:
       - apk add --no-cache make git
-      - make containers/build/clyft
+      - make containers/build/clyft CONTAINER_RUNTIME=docker
     depends_on: [build]
   start-zot:
     image: docker:27
     commands:
       - apk add --no-cache make
-      - make start-zot COMPOSE_PROJECT=$CI_PIPELINE_NUMBER
+      - make start-zot COMPOSE_PROJECT=$CI_PIPELINE_NUMBER CONTAINER_RUNTIME=docker
     depends_on: [build-container]
   stop-zot:
     image: docker:27
     commands:
       - apk add --no-cache make
-      - make stop-zot COMPOSE_PROJECT=$CI_PIPELINE_NUMBER
+      - make stop-zot COMPOSE_PROJECT=$CI_PIPELINE_NUMBER CONTAINER_RUNTIME=docker
     depends_on: [start-zot]
