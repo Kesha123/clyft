@@ -26,18 +26,24 @@ steps:
       - make build
   build-container:
     image: docker:27
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     commands:
       - apk add --no-cache make git
       - make containers/build/clyft CONTAINER_RUNTIME=docker
     depends_on: [build]
   start-zot:
     image: docker:27
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     commands:
       - apk add --no-cache make
       - make start-zot COMPOSE_PROJECT=$CI_PIPELINE_NUMBER CONTAINER_RUNTIME=docker
     depends_on: [build-container]
   stop-zot:
     image: docker:27
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     commands:
       - apk add --no-cache make
       - make stop-zot COMPOSE_PROJECT=$CI_PIPELINE_NUMBER CONTAINER_RUNTIME=docker
